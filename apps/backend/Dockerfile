@@ -4,20 +4,21 @@ WORKDIR /app
 RUN npm i -g pnpm@9
 
 FROM base AS deps
-# Copy root manifests (lock file optional during hackathon)
-COPY package.json .
-# Optional lock / npmrc (will be ignored if absent)
+# Copy root manifests (lock file optional) and workspace definition
+COPY package.json ./
+COPY pnpm-workspace.yaml ./
 COPY pnpm-lock.yaml* ./
 COPY .npmrc* ./
 COPY prisma ./prisma
 COPY apps/backend/package.json apps/backend/
-# Install only needed workspace deps (still simple for hackathon)
-RUN pnpm install --frozen-lockfile
+COPY apps/web/package.json apps/web/
+# Install all workspace deps so prisma & nest cli are present
+RUN pnpm install --frozen-lockfile || pnpm install
 
 FROM deps AS build
 COPY . .
 # Generate Prisma client & build backend
-RUN npx prisma generate
+RUN pnpm exec prisma generate
 RUN pnpm --filter @domascan/backend build
 
 FROM node:20-alpine AS runtime
