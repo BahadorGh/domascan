@@ -1,0 +1,142 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+    height: 100%;
+}
+
+body {
+    background: #f5f7fa;
+    color: #111827;
+}
+
+a {
+    color: #0784c3;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Dark mode root toggled by .dark class on top-level container (set in layout) */
+.dark body {
+    background: #0e1525;
+    color: #e5e7eb;
+}
+
+.hash-inline {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.75rem;
+}
+
+.hash-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid #d1d5db;
+    font-size: 0.625rem;
+    border-radius: 0.375rem;
+    background: #fff;
+    cursor: pointer;
+}
+
+.hash-btn:hover {
+    background: #f9fafb;
+}
+
+.dark .hash-btn {
+    background: #141c2c;
+    border-color: #1f2a3d;
+    color: #d1d5db;
+}
+
+.dark .hash-btn:hover {
+    background: #1b2536;
+}
+
+.table-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.table-filter-input {
+    border: 1px solid #d1d5db;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+}
+
+.dark .table-filter-input {
+    background: #0e1525;
+    border-color: #1f2a3d;
+    color: #e5e7eb;
+}
+
+.table-select {
+    border: 1px solid #d1d5db;
+    padding: 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+}
+
+.dark .table-select {
+    background: #0e1525;
+    border-color: #1f2a3d;
+    color: #e5e7eb;
+}
+
+.btn {
+    border: 1px solid #d1d5db;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    background: #fff;
+}
+
+.btn:hover {
+    background: #f9fafb;
+}
+
+.dark .btn {
+    background: #141c2c;
+    border-color: #1f2a3d;
+    color: #e5e7eb;
+}
+
+.dark .btn:hover {
+    background: #1b2536;
+}
+
+/* Tooltip */
+.tooltip-trigger {
+    position: relative;
+    display: inline-flex;
+}
+
+.tooltip-bubble {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #111827;
+    color: #fff;
+    padding: 0.375rem 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.65rem;
+    line-height: 1;
+    white-space: nowrap;
+    z-index: 40;
+    transition: opacity .12s ease, transform .12s ease;
+    pointer-events: none;
+}
+
+.dark .tooltip-bubble {
+    background: #1b2536;
+}

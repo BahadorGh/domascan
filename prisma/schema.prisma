@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Name {
+  id           String   @id @db.VarChar(255)
+  sld          String
+  tld          String
+  registrarId  Int?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  tokens       Token[]
+}
+
+model Token {
+  id             String   @id @db.VarChar(255)
+  nameId         String
+  owner          String   @db.VarChar(64)
+  chainId        String   @db.VarChar(32)
+  expiresAt      DateTime?
+  lockStatus     Boolean  @default(false)
+  royaltyBps     Int      @default(0)
+  claimed        Boolean  @default(false)
+  synthetic      Boolean  @default(false)
+  lastActivityAt DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  name           Name     @relation(fields: [nameId], references: [id])
+  activities     Activity[]
+  listings       Listing[]
+  offers         Offer[]
+}
+
+model Listing {
+  id         String   @id @db.VarChar(255)
+  tokenId    String
+  orderbook  String
+  chainId    String   @db.VarChar(32)
+  price      Decimal  @db.Decimal(78, 0)
+  currency   String   @db.VarChar(64)
+  status     String   @db.VarChar(32)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  token      Token    @relation(fields: [tokenId], references: [id])
+}
+
+model Offer {
+  id         String   @id @db.VarChar(255)
+  tokenId    String
+  orderbook  String
+  chainId    String   @db.VarChar(32)
+  price      Decimal  @db.Decimal(78, 0)
+  currency   String   @db.VarChar(64)
+  status     String   @db.VarChar(32)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  token      Token    @relation(fields: [tokenId], references: [id])
+}
+
+model Activity {
+  id          String   @id @db.VarChar(255)
+  tokenId     String
+  scopeType   String   @db.VarChar(32)
+  type        String   @db.VarChar(64)
+  txHash      String?  @db.VarChar(80)
+  blockNumber BigInt?
+  timestamp   DateTime @default(now())
+  payload     Json
+  token       Token    @relation(fields: [tokenId], references: [id])
+}
+
+model Command {
+  id            String   @id @db.VarChar(255)
+  type          String
+  status        String
+  failureReason String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model EventCursor {
+  id        Int      @id @default(1)
+  lastId    Int      @default(0)
+  updatedAt DateTime @updatedAt
+}
+
+model Block {
+  number     BigInt   @id
+  hash       String   @db.VarChar(66)
+  parentHash String   @db.VarChar(66)
+  timestamp  DateTime
+  txCount    Int
+  createdAt  DateTime @default(now())
+  txs        Transaction[]
+}
+
+model Transaction {
+  hash        String  @id @db.VarChar(66)
+  blockNumber BigInt
+  from        String  @db.VarChar(64)
+  to          String? @db.VarChar(64)
+  value       Decimal @db.Decimal(78, 0)
+  success     Boolean
+  methodSig   String? @db.VarChar(10)
+  createdAt   DateTime @default(now())
+  block       Block   @relation(fields: [blockNumber], references: [number])
+}
+
+model SmtSnapshot {
+  id        Int      @id @default(autoincrement())
+  root      String   @db.VarChar(66)
+  createdAt DateTime @default(now())
+}
+
+model SmtLeaf {
+  key        String   @id @db.VarChar(255)
+  valueHash  String   @db.VarChar(66)
+  updatedAt  DateTime @updatedAt
+}

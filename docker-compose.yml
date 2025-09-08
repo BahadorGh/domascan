@@ -1,0 +1,46 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./apps/backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PORT: 4000
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/postgres
+      ENABLE_INGESTION: "true"
+      ENABLE_EXPLORER: "true"
+      DOMA_API_BASE: https://api-testnet.doma.xyz
+      DOMA_GRAPHQL_ENDPOINT: https://api-testnet.doma.xyz/graphql
+      DOMA_CHAIN_ID: 97476
+      DOMA_RPC_URL: https://rpc-testnet.doma.xyz
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./
+      dockerfile: apps/web/Dockerfile
+      args:
+        VITE_API_URL: /api
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+
+volumes:
+  pgdata:

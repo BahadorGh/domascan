@@ -1,0 +1,23 @@
+app = "domascan-backend"  # Renamed from doma-backend; adjust if already taken
+
+[build]
+  dockerfile = "apps/backend/Dockerfile"
+
+[env]
+  PORT = "4000"
+  ENABLE_INGESTION = "true"
+  ENABLE_EXPLORER = "true"
+  # Adjust tuning env vars if needed; keep defaults for hackathon
+
+[http_service]
+  internal_port = 4000
+  force_https = true
+  auto_stop_machines = false        # Keep always up for ingestion
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+# Scale settings (optional tweaks)
+[[vm]]
+  size = "shared-cpu-1x"  # Free tier eligible
+  memory = "256mb"
