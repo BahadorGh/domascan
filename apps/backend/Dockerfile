@@ -6,6 +6,7 @@ RUN corepack enable && corepack prepare pnpm@9.15.9 --activate
 FROM base AS deps
 # Copy root manifests (lock file optional) and workspace definition
 COPY package.json ./
+COPY .npmrc ./
 COPY pnpm-workspace.yaml ./
 COPY pnpm-lock.yaml* ./
 COPY .npmrc* ./
