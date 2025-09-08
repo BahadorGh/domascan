@@ -34,8 +34,8 @@ RUN set -eux; \
 
 FROM deps AS build
 COPY . .
-# Generate Prisma client (explicit schema path) & build backend
-RUN pnpm exec prisma generate --schema=prisma/schema.prisma
+# Generate Prisma client (run from backend scope with correct schema path) & build
+RUN pnpm --filter @domascan/backend exec prisma generate --schema ../../prisma/schema.prisma
 RUN pnpm --filter @domascan/backend build
 
 FROM node:20-alpine AS runtime
