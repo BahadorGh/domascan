@@ -27,7 +27,8 @@
         "pino-pretty": "^11.2.2",
         "rxjs": "^7.8.1",
         "viem": "^2.21.15",
-        "zod": "^3.23.8"
+        "zod": "^3.23.8",
+        "dotenv": "^17.2.2"
     },
     "devDependencies": {
         "@nestjs/cli": "^10.4.5",
