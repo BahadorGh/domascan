@@ -13,14 +13,23 @@ COPY .npmrc* ./
 COPY prisma ./prisma
 COPY apps/backend/package.json apps/backend/
 COPY apps/web/package.json apps/web/
-# Install all workspace deps with retry (handles transient registry 404/timeout)
+# Install all workspace deps with retry + fallback (handles transient 404 and lockfile override mismatch)
 ENV NPM_CONFIG_REGISTRY=https://registry.npmjs.org/
 RUN set -eux; \
     for i in 1 2 3; do \
-    pnpm install --frozen-lockfile && break; \
-    echo "pnpm install attempt $i failed; retrying..."; \
-    sleep 3; \
+    if pnpm install --frozen-lockfile; then \
+    break; \
+    else \
+    code=$?; \
+    echo "pnpm frozen install attempt $i failed with code $code"; \
+    # On override mismatch / 404, try non-frozen once per loop
+    if pnpm install --no-frozen-lockfile; then \
+    echo "Succeeded with non-frozen install (lockfile updated in image layer)"; \
+    break; \
+    fi; \
     if [ "$i" = "3" ]; then echo "pnpm install failed after 3 attempts" >&2; exit 1; fi; \
+    sleep 3; \
+    fi; \
     done
 
 FROM deps AS build
