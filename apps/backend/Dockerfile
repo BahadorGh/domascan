@@ -1,29 +1,28 @@
-# Final, most robust Dockerfile
+# Definitive Dockerfile using npm for install but providing pnpm for Prisma CLI
 FROM node:20-alpine AS base
-# Install OpenSSL for Prisma
+# Install OpenSSL for Prisma and enable pnpm via corepack for the Prisma CLI
 RUN apk add --no-cache openssl
+RUN corepack enable && corepack prepare pnpm@9 --activate
 WORKDIR /app
 
 # --- Build Stage ---
 FROM base AS build
 WORKDIR /app
 
-# Copy only necessary manifests and schema
+# Copy manifests and schema
 COPY package.json ./
 COPY apps/backend/package.json ./apps/backend/
 COPY prisma/schema.prisma ./prisma/
 
-# Install dependencies for the backend. This is the most crucial step.
-# By setting the WORKDIR first, all subsequent commands run in this context.
+# Install dependencies for the backend only
 WORKDIR /app/apps/backend
 RUN npm install --no-audit --no-fund
 
-# Now, copy the rest of the source code into the root
+# Copy the rest of the source code
 WORKDIR /app
 COPY . .
 
 # Generate Prisma Client, executing from the correct directory
-# The schema path is now relative to the /app/apps/backend directory
 WORKDIR /app/apps/backend
 RUN npx prisma generate --schema=../../prisma/schema.prisma
 
@@ -45,9 +44,7 @@ RUN npm install --omit=dev --no-audit --no-fund
 WORKDIR /app
 COPY --from=build /app/apps/backend/dist ./apps/backend/dist
 COPY --from=build /app/prisma ./prisma
-# Copy the generated client from the build stage's node_modules
 COPY --from=build /app/apps/backend/node_modules/.prisma ./apps/backend/node_modules/.prisma
 
 EXPOSE 4000
-# The final command also runs from the correct directory
 CMD ["sh", "-c", "cd /app/apps/backend && npx prisma migrate deploy --schema=../../prisma/schema.prisma && node dist/main.js"]
