@@ -1,0 +1,36 @@
+# Koyeb deployment manifest (optional convenience)
+# Docs: https://www.koyeb.com/docs/deploy/deploy-anything/manifest
+
+services:
+  - name: doma-backend
+    type: web
+    regions:
+      - fra  # Choose closest region (fra, par, etc.)
+    ports:
+      - port: 4000
+        protocol: http
+    env:
+      # Set DATABASE_URL in the Koyeb UI (leave placeholder here)
+      - key: DATABASE_URL
+        value: postgresql://neondb_owner:npg_7gdwM1vYSfNn@ep-twilight-art-a29lo6ti-pooler.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+      - key: ENABLE_INGESTION
+        value: "true"
+      - key: ENABLE_EXPLORER
+        value: "true"
+      - key: DOMA_API_BASE
+        value: https://api-testnet.doma.xyz
+      - key: DOMA_GRAPHQL_ENDPOINT
+        value: https://api-testnet.doma.xyz/graphql
+      - key: DOMA_CHAIN_ID
+        value: "97476"
+      - key: DOMA_RPC_URL
+        value: https://rpc-testnet.doma.xyz
+    build:
+      dockerfile_path: apps/backend/Dockerfile
+    lifecycle:
+      # Keep container running; adjust if you add workers
+      restart_policy: always
+
+# To deploy via CLI (after installing `koyeb` and authenticating):
+# koyeb apps init -f koyeb.yaml
+# koyeb deploy -f koyeb.yaml
