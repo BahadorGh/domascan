@@ -19,10 +19,14 @@ COPY . .
 # Install all dependencies (dev and prod)
 RUN pnpm install --frozen-lockfile --prod=false
 
+# Ensure backend workspace dev deps are linked (including prisma CLI)
+RUN pnpm --filter @domascan/backend install --prod=false
+
 # Generate the Prisma Client
-# Run Prisma generate with a pinned CLI via pnpm dlx to avoid auto-install
+# Run Prisma generate using the local CLI and prevent autoinstall
 ENV PRISMA_HIDE_UPDATE_MESSAGE=1
-RUN cd apps/backend && pnpm dlx prisma@5.22.0 generate --schema=../../prisma/schema.prisma
+ENV PRISMA_GENERATE_SKIP_AUTOINSTALL=1
+RUN cd apps/backend && ./node_modules/.bin/prisma generate --schema=../../prisma/schema.prisma
 
 # Build the NestJS application
 RUN pnpm --filter @domascan/backend build
