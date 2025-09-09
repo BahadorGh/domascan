@@ -27,7 +27,7 @@ WORKDIR /app
 # Copy the entire source code over the installed dependencies
 COPY . .
 # Generate the Prisma Client. It will be placed in the root node_modules.
-RUN pnpm exec prisma generate --schema=./prisma/schema.prisma
+RUN ./node_modules/.bin/prisma generate --schema=./prisma/schema.prisma
 # Build the NestJS application
 RUN pnpm --filter @domascan/backend build
 
