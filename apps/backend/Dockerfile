@@ -1,50 +1,54 @@
-# Definitive Dockerfile using npm for install but providing pnpm for Prisma CLI
+# Definitive Dockerfile for pnpm workspaces
 FROM node:20-alpine AS base
-# Install OpenSSL for Prisma and enable pnpm via corepack for the Prisma CLI
-RUN apk add --no-cache openssl
-RUN corepack enable && corepack prepare pnpm@9 --activate
+# Install OpenSSL for Prisma and git for any git-based dependencies
+RUN apk add --no-cache openssl git
 WORKDIR /app
+# Use corepack to manage pnpm, which is the standard for Node.js
+RUN corepack enable && corepack prepare pnpm@9 --activate
+
+# --- Dependencies Stage ---
+# This stage installs ALL dependencies for the entire workspace
+FROM base AS deps
+WORKDIR /app
+# Copy all manifests and lockfile
+COPY package.json pnpm-workspace.yaml ./
+# Use a wildcard for .npmrc and pnpm-lock.yaml in case they don't exist
+COPY .npmrc* pnpm-lock.yaml* ./
+# Copy package.json from all workspaces to ensure correct dependency resolution
+COPY apps/backend/package.json ./apps/backend/
+COPY apps/web/package.json ./apps/web/
+# Install all dependencies (dev and prod)
+RUN pnpm install --frozen-lockfile --prod=false
 
 # --- Build Stage ---
-FROM base AS build
+# This stage builds the backend application
+FROM deps AS build
 WORKDIR /app
-
-# Copy manifests and schema
-COPY package.json ./
-COPY apps/backend/package.json ./apps/backend/
-COPY prisma/schema.prisma ./prisma/
-
-# Install dependencies for the backend only
-WORKDIR /app/apps/backend
-RUN npm install --no-audit --no-fund
-
-# Copy the rest of the source code
-WORKDIR /app
+# Copy the entire source code over the installed dependencies
 COPY . .
-
-# Generate Prisma Client, executing from the correct directory
-WORKDIR /app/apps/backend
-RUN npx prisma generate --schema=../../prisma/schema.prisma
-
-# Build the NestJS app
-RUN npx nest build
+# Generate the Prisma Client. It will be placed in the root node_modules.
+RUN pnpm exec prisma generate --schema=./prisma/schema.prisma
+# Build the NestJS application
+RUN pnpm --filter @domascan/backend build
 
 # --- Production Stage ---
+# This stage creates the final, lean image for deployment
 FROM base AS production
 WORKDIR /app
 ENV NODE_ENV=production
-
-# Install production dependencies only
-COPY package.json ./
+# Copy manifests and install ONLY production dependencies
+COPY package.json pnpm-workspace.yaml ./
+COPY .npmrc* pnpm-lock.yaml* ./
 COPY apps/backend/package.json ./apps/backend/
-WORKDIR /app/apps/backend
-RUN npm install --omit=dev --no-audit --no-fund
-
-# Copy built app and necessary assets from the build stage
-WORKDIR /app
+COPY apps/web/package.json ./apps/web/
+RUN pnpm install --prod
+# Copy the built application from the build stage
 COPY --from=build /app/apps/backend/dist ./apps/backend/dist
+# Copy the prisma schema for runtime migrations
 COPY --from=build /app/prisma ./prisma
-COPY --from=build /app/apps/backend/node_modules/.prisma ./apps/backend/node_modules/.prisma
+# Copy the generated Prisma Client from the root node_modules in the build stage
+COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
 
 EXPOSE 4000
-CMD ["sh", "-c", "cd /app/apps/backend && npx prisma migrate deploy --schema=../../prisma/schema.prisma && node dist/main.js"]
+# The final command runs from the root, using npx to find the prisma binary
+CMD ["sh", "-c", "npx prisma migrate deploy --schema=prisma/schema.prisma && node apps/backend/dist/main.js"]
