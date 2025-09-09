@@ -20,7 +20,8 @@ COPY . .
 RUN pnpm install --frozen-lockfile --prod=false
 
 # Generate the Prisma Client
-RUN ./node_modules/.bin/prisma generate --schema=./prisma/schema.prisma
+# Run Prisma generate in the backend workspace so it can find @prisma/client
+RUN pnpm --filter @domascan/backend exec prisma generate --schema=../../prisma/schema.prisma
 
 # Build the NestJS application
 RUN pnpm --filter @domascan/backend build
@@ -30,19 +31,23 @@ RUN pnpm --filter @domascan/backend build
 FROM base AS production
 WORKDIR /app
 
-# Copy package manager files to install production dependencies
+# Ensure runtime libs are present (Prisma engines need OpenSSL)
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates \
+	&& rm -rf /var/lib/apt/lists/*
+
+# Copy package manager files to install production dependencies for backend only
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY apps/backend/package.json ./apps/backend/
-COPY apps/web/package.json ./apps/web/
 
-# Install only production dependencies
-RUN pnpm install --prod
+# Install only production dependencies for the backend package
+RUN pnpm --filter @domascan/backend install --prod
 
 # Copy the built application from the build stage
 COPY --from=build /app/apps/backend/dist ./apps/backend/dist
-# Copy the generated Prisma client from the build stage
-COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
-# Copy the prisma schema for runtime access
+# Copy the generated Prisma client from the build stage next to @prisma/client
+COPY --from=build /app/apps/backend/node_modules/.prisma ./apps/backend/node_modules/.prisma
+
+# (Optional) Copy the prisma schema for reference (not required at runtime)
 COPY prisma/schema.prisma ./prisma/
 
 # Set the command to run the application
