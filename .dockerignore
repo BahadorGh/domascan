@@ -1,0 +1,37 @@
+# Keep prisma directory (don't exclude) so Prisma schema is available during build
+!prisma/
+
+# General ignores
+.git
+.github
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+
+# Node modules (will be installed inside image)
+**/node_modules
+
+# Build outputs
+**/dist
+**/.turbo
+
+# Local env files (copy explicitly if needed)
+.env
+**/.env.local
+
+# OS / Editor cruft
+.DS_Store
+*.swp
+*.swo
+*.idea
+.vscode
+
+# Docker related (except the backend Dockerfile referenced with -f)
+Dockerfile
+Dockerfile.*
+!apps/backend/Dockerfile
+
+# Cache
+.pnpm-store
+**/coverage
