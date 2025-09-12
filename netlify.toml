@@ -4,12 +4,13 @@
 
 [build.environment]
   NODE_VERSION = "20"
-  VITE_API_URL = "https://domascan-backend.fly.dev" # Replace with your Fly backend URL
+  # Frontend code will call /api/*; Netlify redirect below proxies to Koyeb backend
+  VITE_API_URL = "/api"
 
 # Redirect all SPA routes to index.html
 [[redirects]]
   from = "/api/*"
-  to = "https://domascan-backend.fly.dev/:splat"  # Proxy API calls during production
+  to = "https://orthodox-kiley-bahadorgh-a9181840.koyeb.app/:splat"  # Proxy API calls to Koyeb backend
   status = 200
   force = true
 
